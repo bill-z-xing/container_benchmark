@@ -14,8 +14,8 @@
 using INT_TYPE = uint64_t;
 
 static constexpr INT_TYPE seed       = 1;
-static constexpr INT_TYPE rand_range = 3'000;
-static constexpr size_t   num_ters   = 10'000'000;
+static constexpr INT_TYPE rand_range = 30'000;
+static constexpr size_t   num_iters   = 1'000'000;
 
 struct HASH;
 
@@ -96,8 +96,6 @@ template <class SET_TYPE>
 void do_random_insertion(SET_TYPE & my_set)
 {
 	auto rand_gen = make_rand_gen();
-	const size_t num_iters = 10000000;
-
 	for (size_t i = 0; i < num_iters; ++i)
 	{
 		my_set.emplace(*rand_gen);
@@ -126,6 +124,7 @@ void hash_set()
 	PROFILER p("hash_set");
 
 	std::unordered_set<ELEM_TYPE, HASH> my_set;
+	my_set.reserve(rand_range * 3);
 	do_random_insertion(my_set);
 
 	std::vector<ELEM_TYPE> vec;
@@ -146,8 +145,7 @@ void hash_set()
 int main()
 {
 	std_set();
-
-	flat_set();
 	hash_set();
+	flat_set();
 	return 0;
 }
