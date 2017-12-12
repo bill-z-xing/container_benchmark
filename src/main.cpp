@@ -14,7 +14,7 @@
 using INT_TYPE = uint64_t;
 
 static constexpr INT_TYPE seed       = 1;
-static constexpr INT_TYPE rand_range = 30'000;
+static constexpr INT_TYPE rand_range = 20;
 static constexpr size_t   num_iters   = 1'000'000;
 
 struct HASH;
@@ -59,6 +59,11 @@ public:
 		}
 	}
 
+	size_t hash() const
+	{
+		return std::hash<INT_TYPE>()(_a ^ _b ^ _c ^ _d);
+	}
+
 	friend bool operator==(const MY_OBJ & a, const MY_OBJ & b)
 	{
 		return a._a == b._a &&
@@ -78,10 +83,9 @@ struct HASH
 {
 	size_t operator()(const MY_OBJ & obj) const
 	{
-		return std::hash<INT_TYPE>()(obj._a ^ obj._b ^ obj._c ^ obj._d);
+		return obj.hash();
 	}
 };
-
 
 
 using ELEM_TYPE = MY_OBJ;
@@ -102,13 +106,26 @@ void do_random_insertion(SET_TYPE & my_set)
 	}
 }
 
+template <class SET_TYPE>
+void do_sequential_traversal(const SET_TYPE & my_set)
+{
+	size_t total_hash = 0;
+	for (const auto & elem : my_set)
+	{
+		total_hash = total_hash ^ elem.hash();
+	}
+	std::cout << "Traversal result: " << total_hash << std::endl;
+}
+
 
 void flat_set()
 {
 	PROFILER p("flat_set");
 
 	boost::container::flat_set<ELEM_TYPE> my_set;
+	my_set.reserve(rand_range);
 	do_random_insertion(my_set);
+	do_sequential_traversal(my_set);
 }
 
 void std_set()
@@ -117,6 +134,7 @@ void std_set()
 
 	std::set<ELEM_TYPE> my_set;
 	do_random_insertion(my_set);
+	do_sequential_traversal(my_set);
 }
 
 void hash_set()
@@ -124,8 +142,9 @@ void hash_set()
 	PROFILER p("hash_set");
 
 	std::unordered_set<ELEM_TYPE, HASH> my_set;
-	my_set.reserve(rand_range * 3);
+	my_set.reserve(rand_range * 4);
 	do_random_insertion(my_set);
+	std::cout << "Load factor: " << my_set.load_factor() << std::endl;
 
 	std::vector<ELEM_TYPE> vec;
 	vec.reserve(my_set.size());
